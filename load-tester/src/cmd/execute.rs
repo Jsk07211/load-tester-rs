@@ -5,17 +5,17 @@ use clap::Parser;
 pub struct Args {
     /// Target URL to load test
     #[arg(short, long, default_value = "http://localhost:8080/ping")]
-    endpoint: String,
+    pub endpoint: String,
 
     /// Number of concurrent users
     #[arg(short, long, default_value_t = 5)]
-    users: u32,
+    pub users: u32,
 
     /// Duration of test
     #[arg(short, long, default_value_t = 30)]
-    duration_s: u64,
+    pub duration_s: u64,
 
     /// HTTP method
     #[arg(short, long, default_value = "GET")]
-    method: String,
+    pub method: String,
 }
