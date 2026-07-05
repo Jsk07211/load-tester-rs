@@ -8,6 +8,8 @@ Items listed according to planned implementation schedule.
 - [x] Concurrency model — handled by tokio's runtime (defaults to # of CPUs)
 - [x] Spawn concurrent virtual user tasks
 - [x] Aggressively spam test server
+  - [ ] Switch from polling to tokio::sleep_until(deadline)
+  - [ ] Extract worker loop logic from run function
 
 ## Logging
 - [x] Add statistics
