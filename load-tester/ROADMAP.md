@@ -16,15 +16,57 @@
   - [x] Total successful requests
   - [x] Percentage of successful requests
 
-## POST Support
+## HTTP Methods Support
 - [x] Create POST endpoint to test
 - [ ] Test POST endpoint
 - [ ] Accept custom payloads
+- [ ] Generate dummy payloads according to custom shape
+- [ ] Accept custom headers
+- [ ] Allow ingestion from config file instead of just CLI flags
 
 # Robustness
 - [ ] Handle request errors without crashing (currently discarded)
 - [ ] Configurable per-request timeout (guard against hung requests)
+  - [ ] Gentle shutdown when exceeding timeout after test duration ends
 - [ ] Graceful handling of unreachable / invalid endpoint
+- [ ] Hard concurrency cap (`max_in_flight`) - rejecting-and-counting
+  - [ ] Add saturated/rejected counter
+
+# Spawning Behaviour
+- [x] Closed model: Specifying # of virtual users
+- [ ] Open model: Specifying RPS
+    - [ ] Determine ticker rate based on desired RPS (`interval_ms = 1000 / target_rps`)
+
+| | Closed Model (VUs) | Open Model (Rate) |
+|---|---|---|
+| **You configure** | Number of virtual users | Requests per second (rate) |
+| **Answers the question** | "If I have N concurrent users behaving like this, what performance do they experience?" | "If traffic arrives at rate R no matter what, does my server keep up, and how does it fail if not?" |
+| **Best for** | Simulating realistic user sessions (browsing, waiting, clicking) where behavior genuinely depends on response time (e.g., "user won't click 'next' until page loads") | Capacity testing, finding breaking points, and not lying to yourself about degradation |
+| **Throughput (RPS)** | Emergent output — depends on response time | Direct input — you set it |
+| **Concurrency (in-flight requests)** | Direct input — capped at N | Emergent output — can pile up |
+| **Behavior under server slowdown** | Offered load silently drops (coordinated omission) | Offered load stays constant; pileup/errors surface the real degradation |
+
+# Ramping Behaviour
+- [ ] Rate-based (increase load by X users/requests-per-second every T seconds)
+- [ ] Support ramp-up/hold/ramp-down pattern (T_up, T_hold, T_down), sum to get total wall clock duration
+    - [ ] For open model, recalculate with stepped ramp (`step_duration = T_up / N; R_i = target_rps * (i / N)`)
+      - [ ] User configures an increment Δ (req/s to add per step) and a step_interval (seconds per step) `N = target_rps / Δ; step_duration = step_interval` (TODO: Handle remainder if not clean division)
+    - [ ] Add phase-tagging (ramp-up, hold, ramp-down)
+
+# API Assertions/Failure Handling
+- [ ] HTTP-level failures (non-2xx status)
+- [ ] Transport-level failures (connection refused, timeout, DNS failure)
+- [ ] Assertion failures (wrong body content, or over latency threshold, even if status was 200)
+
+```bash
+assert:
+  status: 200
+  body_contains: "\"status\":\"ok\""   # optional
+  max_latency_ms: 500                   # optional
+```
+
+# Export
+- [ ] JSON/CSV results
 
 Sources:
 
@@ -36,3 +78,4 @@ https://rust-lang-nursery.github.io/rust-cookbook/web/clients/requests.html
 https://tokio.rs/tokio/tutorial/
 https://stackoverflow.com/questions/75836002/what-is-the-benefit-of-using-tokio-instead-of-os-threads-in-rust
 https://stackoverflow.com/questions/8137391/percentile-calculation
+https://www.geeksforgeeks.org/software-testing/software-testing-load-testing/
