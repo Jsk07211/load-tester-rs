@@ -1,10 +1,30 @@
-# Basic Functionality
+# Roadmap
 
-[x] Parse arguments
-[x] Create test server
-[x] Figure out how to send get request
-[ ] Creater worker pool
-[ ] Aggressively spam test server
+## Basic Functionality
+- [x] Parse arguments
+- [x] Create test server
+- [x] Figure out how to send GET request
+- [x] Concurrency model — handled by tokio's runtime (defaults to # of CPUs)
+- [x] Spawn concurrent virtual user tasks
+- [x] Aggressively spam test server
+
+## Logging
+- [ ] Add statistics
+  - [ ] p90 / p95 / p99 latency
+  - [ ] Average requests per second
+  - [ ] Total requests sent
+  - [ ] Total successful requests
+  - [ ] Percentage of successful requests
+
+## POST Support
+- [ ] Create POST endpoint to test
+- [ ] Test POST endpoint
+- [ ] Accept custom payloads
+
+# Robustness
+[ ] Handle request errors without crashing (currently discarded)
+[ ] Configurable per-request timeout (guard against hung requests)
+[ ] Graceful handling of unreachable / invalid endpoint
 
 Sources:
 
