@@ -1,3 +1,4 @@
+/// Sends out requests
 use reqwest::{Client, Url};
 
 pub async fn get_request(client: &Client, url: &Url) -> Result<(), anyhow::Error> {

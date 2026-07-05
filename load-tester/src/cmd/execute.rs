@@ -1,5 +1,5 @@
-use super::config::Config;
-use crate::cmd::http::get_request;
+use crate::config::Config;
+use crate::http::get_request;
 use clap::Parser;
 use reqwest::{Client, Url};
 use std::{
