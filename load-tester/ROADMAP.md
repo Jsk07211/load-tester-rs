@@ -17,7 +17,7 @@
   - [x] Percentage of successful requests
 
 ## POST Support
-- [ ] Create POST endpoint to test
+- [x] Create POST endpoint to test
 - [ ] Test POST endpoint
 - [ ] Accept custom payloads
 

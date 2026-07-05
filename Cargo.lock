@@ -770,6 +770,7 @@ dependencies = [
  "anyhow",
  "clap",
  "clap_builder",
+ "http",
  "reqwest",
  "tokio",
 ]
