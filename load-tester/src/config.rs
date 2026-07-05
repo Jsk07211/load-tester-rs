@@ -26,7 +26,7 @@ pub struct Args {
 pub struct Config {
     pub endpoint: Url,
     pub virtual_users: u32,
-    pub duration_s: Duration,
+    pub duration: Duration,
     pub method: http::Method,
 }
 
@@ -37,7 +37,7 @@ impl TryFrom<Args> for Config {
         Ok(Config {
             endpoint: Url::parse(&args.endpoint)?,
             virtual_users: args.virtual_users,
-            duration_s: Duration::from_secs(args.duration_s),
+            duration: Duration::from_secs(args.duration_s),
             method: args.method.parse()?, // type inference
         })
     }

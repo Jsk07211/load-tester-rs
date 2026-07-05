@@ -1,12 +1,10 @@
 use crate::config::Config;
 use crate::http::get_request;
+use crate::metrics::{RunStatistics, print_summary};
 use clap::Parser;
 use reqwest::{Client, Url};
 use std::{
-    sync::{
-        Arc,
-        atomic::{AtomicU64, Ordering},
-    },
+    sync::{Arc, atomic::Ordering},
     time::Instant,
 };
 
@@ -34,18 +32,18 @@ pub struct Args {
 struct SharedState {
     client: Client,
     url: Url,
-    request_count: Arc<AtomicU64>,
+    stats: Arc<RunStatistics>,
 }
 
 pub async fn run(config: Config) -> anyhow::Result<()> {
     let shared = SharedState {
         client: Client::new(), // uses Arc internally, cloning is cheap
         url: config.endpoint,
-        request_count: Arc::new(AtomicU64::new(0)),
+        stats: Arc::new(RunStatistics::default()),
     };
 
     let mut tasks = Vec::new();
-    let deadline = Instant::now() + config.duration_s;
+    let deadline = Instant::now() + config.duration;
 
     for _ in 0..config.virtual_users {
         let shared = shared.clone();
@@ -53,9 +51,19 @@ pub async fn run(config: Config) -> anyhow::Result<()> {
         // tokio spawn does not block outer loop
         tasks.push(tokio::spawn(async move {
             while Instant::now() < deadline {
-                if get_request(&shared.client, &shared.url).await.is_ok() {
-                    shared.request_count.fetch_add(1, Ordering::Relaxed); // no ordering guarantee at all beyond the atomic operation itself being atomic
+                let start = Instant::now();
+                let result = get_request(&shared.client, &shared.url).await;
+                let elapsed = start.elapsed();
+
+                // Populate stats
+                if result.is_ok() {
+                    // Ordering::Relaxed: No ordering guarantee at all beyond the atomic operation itself being atomic
+                    shared.stats.success_count.fetch_add(1, Ordering::Relaxed);
+                } else {
+                    shared.stats.error_count.fetch_add(1, Ordering::Relaxed);
                 }
+
+                shared.stats.latencies.lock().unwrap().push(elapsed);
             }
         }));
     }
@@ -64,10 +72,7 @@ pub async fn run(config: Config) -> anyhow::Result<()> {
         task.await?;
     }
 
-    println!(
-        "Total requests: {}",
-        shared.request_count.load(Ordering::Relaxed)
-    );
+    print_summary(&shared.stats, config.duration);
 
     Ok(())
 }
