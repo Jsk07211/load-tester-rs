@@ -73,12 +73,16 @@ pub fn get_percentile(sorted: &[Duration], percentile: f32) -> Duration {
     }
 }
 
+// TODO: This could be an impl of SummaryStatistics
 pub fn get_summary(metrics: &RunMetrics, test_duration: Duration) -> SummaryStatistics {
     let success = metrics.success_count.load(Ordering::Relaxed);
     let errors = metrics.error_count.load(Ordering::Relaxed);
-    let total = success + errors;
-    let success_rate = (success / total) as f64 * 100.0;
-    let avg_rps = total as f64 / test_duration.as_secs_f64();
+    let total_requests = success + errors;
+    let success_rate = match total_requests {
+        0 => 0.0,
+        _ => (success / total_requests) as f64 * 100.0,
+    };
+    let avg_rps = total_requests as f64 / test_duration.as_secs_f64();
 
     let mut latencies = metrics.latencies.lock().unwrap().clone();
     latencies.sort_unstable();
@@ -86,7 +90,7 @@ pub fn get_summary(metrics: &RunMetrics, test_duration: Duration) -> SummaryStat
     let avg_latency = if latencies.is_empty() {
         Duration::ZERO
     } else {
-        latencies.iter().sum::<Duration>() / total as u32
+        latencies.iter().sum::<Duration>() / total_requests as u32
     };
 
     let p90 = get_percentile(&latencies, 90.0);
@@ -95,7 +99,7 @@ pub fn get_summary(metrics: &RunMetrics, test_duration: Duration) -> SummaryStat
 
     SummaryStatistics {
         test_duration: test_duration.as_secs_f64(),
-        total_requests: success + errors,
+        total_requests,
         success,
         errors,
         success_rate,
