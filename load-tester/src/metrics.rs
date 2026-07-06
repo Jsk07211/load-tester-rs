@@ -7,7 +7,7 @@ use std::{
 };
 
 #[derive(Default)]
-pub struct RunStatistics {
+pub struct RunMetrics {
     pub test_duration: Duration,
     pub success_count: AtomicU64,
     pub error_count: AtomicU64,
@@ -15,6 +15,41 @@ pub struct RunStatistics {
     // tokio::sync::Mutex yields the async task while waiting,
     // letting other tasks run on that thread in the meantime.
     pub latencies: Mutex<Vec<Duration>>,
+}
+
+pub struct SummaryStatistics {
+    pub test_duration: f64,
+    pub total_requests: u64,
+    pub success: u64,
+    pub errors: u64,
+    pub success_rate: f64,
+    pub avg_rps: f64,
+    pub avg_latency: Duration,
+    pub p90: Duration,
+    pub p95: Duration,
+    pub p99: Duration,
+}
+
+impl SummaryStatistics {
+    pub fn report(&self) -> String {
+        let mut out = String::new();
+
+        out.push_str("\n===== Load Test Summary =====\n");
+        out.push_str(&format!("Duration:           {:.2}s\n", self.test_duration));
+        out.push_str(&format!("Total requests:     {}\n", self.total_requests));
+        out.push_str(&format!("Successful:         {}\n", self.success));
+        out.push_str(&format!("Failed:             {}\n", self.errors));
+        out.push_str(&format!("Success rate:       {:.2}%\n", self.success_rate));
+        out.push_str(&format!("Avg requests/sec:   {:.2}\n", self.avg_rps));
+        out.push_str("-----------------------------\n");
+        out.push_str(&format!("Avg latency:        {:.2?}\n", self.avg_latency));
+        out.push_str(&format!("p90 latency:        {:.2?}\n", self.p90));
+        out.push_str(&format!("p95 latency:        {:.2?}\n", self.p95));
+        out.push_str(&format!("p99 latency:        {:.2?}\n", self.p99));
+        out.push_str("=============================\n");
+
+        out
+    }
 }
 
 /// Calculates a percentile from a sorted slice of durations, using linear
@@ -38,14 +73,14 @@ pub fn get_percentile(sorted: &[Duration], percentile: f32) -> Duration {
     }
 }
 
-pub fn print_summary(stats: &RunStatistics, test_duration: Duration) {
-    let success = stats.success_count.load(Ordering::Relaxed);
-    let errors = stats.error_count.load(Ordering::Relaxed);
+pub fn get_summary(metrics: &RunMetrics, test_duration: Duration) -> SummaryStatistics {
+    let success = metrics.success_count.load(Ordering::Relaxed);
+    let errors = metrics.error_count.load(Ordering::Relaxed);
     let total = success + errors;
-    let success_rate = (success / total) * 100;
+    let success_rate = (success / total) as f64 * 100.0;
     let avg_rps = total as f64 / test_duration.as_secs_f64();
 
-    let mut latencies = stats.latencies.lock().unwrap().clone();
+    let mut latencies = metrics.latencies.lock().unwrap().clone();
     latencies.sort_unstable();
 
     let avg_latency = if latencies.is_empty() {
@@ -58,17 +93,16 @@ pub fn print_summary(stats: &RunStatistics, test_duration: Duration) {
     let p95 = get_percentile(&latencies, 95.0);
     let p99 = get_percentile(&latencies, 99.0);
 
-    println!("\n===== Load Test Summary =====");
-    println!("Duration:            {:.2}s", test_duration.as_secs_f64());
-    println!("Total requests:      {total}");
-    println!("Successful:          {success}");
-    println!("Failed:              {errors}");
-    println!("Success rate:        {success_rate:.2}%");
-    println!("Avg requests/sec:    {avg_rps:.2}");
-    println!("------------------------------");
-    println!("Avg latency:         {:.2?}", avg_latency);
-    println!("p90 latency:         {:.2?}", p90);
-    println!("p95 latency:         {:.2?}", p95);
-    println!("p99 latency:         {:.2?}", p99);
-    println!("==============================\n");
+    SummaryStatistics {
+        test_duration: test_duration.as_secs_f64(),
+        total_requests: success + errors,
+        success,
+        errors,
+        success_rate,
+        avg_rps,
+        avg_latency,
+        p90,
+        p95,
+        p99,
+    }
 }
