@@ -5,7 +5,7 @@ use std::{
     },
     time::Duration,
 };
-#[allow(dead_code)]
+
 #[derive(Default, Debug)]
 pub struct RunMetrics {
     pub test_duration: Duration,
@@ -15,22 +15,6 @@ pub struct RunMetrics {
     // tokio::sync::Mutex yields the async task while waiting,
     // letting other tasks run on that thread in the meantime.
     pub latencies: Mutex<Vec<Duration>>,
-}
-
-impl RunMetrics {
-    fn new(
-        test_duration_s: f64,
-        success_count: u64,
-        error_count: u64,
-        latencies: Vec<Duration>,
-    ) -> Result<RunMetrics, Self> {
-        Ok(RunMetrics {
-            test_duration: Duration::from_secs_f64(test_duration_s),
-            success_count: AtomicU64::from(success_count),
-            error_count: AtomicU64::from(error_count),
-            latencies: Mutex::from(latencies),
-        })
-    }
 }
 
 #[derive(PartialEq, Debug)]
@@ -131,6 +115,22 @@ pub fn get_summary(metrics: &RunMetrics) -> SummaryStatistics {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    impl RunMetrics {
+        fn new(
+            test_duration_s: f64,
+            success_count: u64,
+            error_count: u64,
+            latencies: Vec<Duration>,
+        ) -> Result<RunMetrics, Self> {
+            Ok(RunMetrics {
+                test_duration: Duration::from_secs_f64(test_duration_s),
+                success_count: AtomicU64::from(success_count),
+                error_count: AtomicU64::from(error_count),
+                latencies: Mutex::from(latencies),
+            })
+        }
+    }
     mod get_percentile_tests {
         use super::*;
 
@@ -170,12 +170,49 @@ mod tests {
 
         #[test]
         fn get_summary_precision() {
-            let durations = vec![
-                Duration::from_secs_f64(10.0),
-                Duration::from_secs_f64(20.0),
-                Duration::from_secs_f64(30.0),
-                Duration::from_secs_f64(40.12),
+            let mut durations = vec![
+                Duration::from_secs_f64(3.39),
+                Duration::from_secs_f64(5.51),
+                Duration::from_secs_f64(4.25),
+                Duration::from_secs_f64(1.62),
+                Duration::from_secs_f64(8.03),
+                Duration::from_secs_f64(7.91),
+                Duration::from_secs_f64(3.15),
+                Duration::from_secs_f64(6.12),
+                Duration::from_secs_f64(7.98),
+                Duration::from_secs_f64(7.42),
+                Duration::from_secs_f64(7.27),
+                Duration::from_secs_f64(3.72),
+                Duration::from_secs_f64(7.34),
+                Duration::from_secs_f64(2.85),
+                Duration::from_secs_f64(7.15),
+                Duration::from_secs_f64(4.53),
+                Duration::from_secs_f64(7.53),
+                Duration::from_secs_f64(1.81),
+                Duration::from_secs_f64(5.61),
+                Duration::from_secs_f64(7.67),
+                Duration::from_secs_f64(6.84),
+                Duration::from_secs_f64(1.84),
+                Duration::from_secs_f64(2.68),
+                Duration::from_secs_f64(3.02),
+                Duration::from_secs_f64(9.86),
+                Duration::from_secs_f64(8.58),
+                Duration::from_secs_f64(0.43),
+                Duration::from_secs_f64(0.88),
+                Duration::from_secs_f64(2.40),
+                Duration::from_secs_f64(0.13),
+                Duration::from_secs_f64(6.99),
+                Duration::from_secs_f64(5.26),
+                Duration::from_secs_f64(9.17),
+                Duration::from_secs_f64(1.88),
+                Duration::from_secs_f64(5.11),
+                Duration::from_secs_f64(4.13),
+                Duration::from_secs_f64(1.89),
+                Duration::from_secs_f64(1.65),
+                Duration::from_secs_f64(9.91),
+                Duration::from_secs_f64(7.63),
             ];
+            durations.sort();
             let metrics = RunMetrics::new(5.0, 20, 20, durations.clone()).unwrap();
             let expected = SummaryStatistics {
                 test_duration: 5.0,
@@ -184,7 +221,7 @@ mod tests {
                 errors: 20,
                 success_rate: 0.5,
                 avg_rps: 8.0,
-                avg_latency: Duration::from_secs_f64(27.53),
+                avg_latency: Duration::from_secs_f64(5.0285),
                 p90: get_percentile(&durations, 90.0),
                 p95: get_percentile(&durations, 95.0),
                 p99: get_percentile(&durations, 99.0),
