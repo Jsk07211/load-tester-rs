@@ -82,3 +82,5 @@ Sources:
 7. https://stackoverflow.com/questions/75836002/what-is-the-benefit-of-using-tokio-instead-of-os-threads-in-rust
 8. https://stackoverflow.com/questions/8137391/percentile-calculation
 9. https://www.geeksforgeeks.org/software-testing/software-testing-load-testing/
+10. https://doc.rust-lang.org/book/ch11-01-writing-tests.html
+11. https://cybernetist.com/2024/04/19/rust-tokio-task-cancellation-patterns/

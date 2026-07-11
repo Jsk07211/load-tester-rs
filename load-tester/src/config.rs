@@ -11,12 +11,16 @@ pub struct Args {
     pub endpoint: String,
 
     /// Number of virtual users (concurrent in-flight requests, sustained for the full test duration)
-    #[arg(short, long, default_value_t = 5)]
+    #[arg(short, long, default_value_t = 200)]
     pub virtual_users: u32,
 
     /// Duration of test
     #[arg(short, long, default_value_t = 5.0)]
     pub duration_s: f64,
+
+    /// Per-task timeout duration
+    #[arg(short, long, default_value_t = 0.5)]
+    pub timeout_s: f64,
 
     /// HTTP method
     #[arg(short, long, default_value = "GET")]
@@ -27,6 +31,7 @@ pub struct Config {
     pub endpoint: Url,
     pub virtual_users: u32,
     pub duration: Duration,
+    pub timeout: Duration,
     pub method: http::Method,
 }
 
@@ -38,6 +43,7 @@ impl TryFrom<Args> for Config {
             endpoint: Url::parse(&args.endpoint)?,
             virtual_users: args.virtual_users,
             duration: Duration::from_secs_f64(args.duration_s),
+            timeout: Duration::from_secs_f64(args.timeout_s),
             method: args.method.parse()?, // type inference
         })
     }

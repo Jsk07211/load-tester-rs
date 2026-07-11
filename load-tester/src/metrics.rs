@@ -1,20 +1,11 @@
-use std::{
-    sync::{
-        Mutex,
-        atomic::{AtomicU64, Ordering},
-    },
-    time::Duration,
-};
+use std::time::Duration;
 
 #[derive(Default, Debug)]
 pub struct RunMetrics {
     pub test_duration: Duration,
-    pub success_count: AtomicU64,
-    pub error_count: AtomicU64,
-    // std::sync::Mutex blocks the OS thread while waiting for the lock;
-    // tokio::sync::Mutex yields the async task while waiting,
-    // letting other tasks run on that thread in the meantime.
-    pub latencies: Mutex<Vec<Duration>>,
+    pub success_count: u64,
+    pub error_count: u64,
+    pub latencies: Vec<Duration>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -76,16 +67,16 @@ pub fn get_percentile(sorted: &[Duration], percentile: f32) -> Duration {
 
 // TODO: This could be an impl of SummaryStatistics
 pub fn get_summary(metrics: &RunMetrics) -> SummaryStatistics {
-    let success = metrics.success_count.load(Ordering::Relaxed);
-    let errors = metrics.error_count.load(Ordering::Relaxed);
+    let success = metrics.success_count;
+    let errors = metrics.error_count;
     let total_requests = success + errors;
     let success_rate = match total_requests {
         0 => 0.0,
-        _ => success as f64 / total_requests as f64,
+        _ => (success as f64 / total_requests as f64) * 100.0,
     };
     let avg_rps = total_requests as f64 / metrics.test_duration.as_secs_f64();
 
-    let mut latencies = metrics.latencies.lock().unwrap().clone();
+    let mut latencies = metrics.latencies.clone();
     latencies.sort_unstable();
 
     let avg_latency = if latencies.is_empty() {
@@ -125,12 +116,13 @@ mod tests {
         ) -> Result<RunMetrics, Self> {
             Ok(RunMetrics {
                 test_duration: Duration::from_secs_f64(test_duration_s),
-                success_count: AtomicU64::from(success_count),
-                error_count: AtomicU64::from(error_count),
-                latencies: Mutex::from(latencies),
+                success_count,
+                error_count,
+                latencies,
             })
         }
     }
+
     mod get_percentile_tests {
         use super::*;
 

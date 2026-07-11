@@ -4,8 +4,8 @@ use crate::worker::{self, SharedState};
 
 pub async fn run(config: Config) -> anyhow::Result<()> {
     let initial_state = SharedState::try_from(&config)?;
-    let shared = worker::worker_loop(&config, initial_state).await?;
-    let summary = get_summary(&shared.metrics);
+    let metrics = worker::worker_loop(&config, initial_state).await?;
+    let summary = get_summary(&metrics);
     print!("{}", summary.report());
 
     Ok(())
