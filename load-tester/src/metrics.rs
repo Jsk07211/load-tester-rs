@@ -97,7 +97,7 @@ pub fn get_summary(metrics: &RunMetrics) -> SummaryStatistics {
     let total_requests = success + errors;
     let success_rate = match total_requests {
         0 => 0.0,
-        _ => (success / total_requests) as f64 * 100.0,
+        _ => success as f64 / total_requests as f64,
     };
     let avg_rps = total_requests as f64 / metrics.test_duration.as_secs_f64();
 
