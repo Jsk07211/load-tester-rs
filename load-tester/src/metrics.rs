@@ -127,3 +127,70 @@ pub fn get_summary(metrics: &RunMetrics) -> SummaryStatistics {
         p99,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    mod get_percentile_tests {
+        use super::*;
+
+        #[test]
+        fn get_percentile_max() {
+            let durations = [
+                Duration::from_secs_f64(10.0),
+                Duration::from_secs_f64(20.0),
+                Duration::from_secs_f64(30.0),
+                Duration::from_secs_f64(40.0),
+            ];
+
+            let expected = Duration::from_secs_f64(40.0);
+            let actual = get_percentile(&durations, 100.0);
+
+            assert_eq!(expected, actual)
+        }
+
+        #[test]
+        fn get_percentile_precision() {
+            let durations = [
+                Duration::from_secs_f64(10.0),
+                Duration::from_secs_f64(20.0),
+                Duration::from_secs_f64(30.0),
+                Duration::from_secs_f64(40.12),
+            ];
+
+            let expected = Duration::from_secs_f64(40.12);
+            let actual = get_percentile(&durations, 100.0);
+
+            assert_eq!(expected, actual)
+        }
+    }
+
+    mod get_summary_tests {
+        use super::*;
+
+        #[test]
+        fn get_summary_precision() {
+            let durations = vec![
+                Duration::from_secs_f64(10.0),
+                Duration::from_secs_f64(20.0),
+                Duration::from_secs_f64(30.0),
+                Duration::from_secs_f64(40.12),
+            ];
+            let metrics = RunMetrics::new(5.0, 20, 20, durations.clone()).unwrap();
+            let expected = SummaryStatistics {
+                test_duration: 5.0,
+                total_requests: 40,
+                success: 20,
+                errors: 20,
+                success_rate: 0.5,
+                avg_rps: 8.0,
+                avg_latency: Duration::from_secs_f64(27.53),
+                p90: get_percentile(&durations, 90.0),
+                p95: get_percentile(&durations, 95.0),
+                p99: get_percentile(&durations, 99.0),
+            };
+            let actual = get_summary(&metrics);
+            assert_eq!(expected, actual)
+        }
+    }
+}
