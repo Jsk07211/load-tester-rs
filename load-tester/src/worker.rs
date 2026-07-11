@@ -21,7 +21,10 @@ impl TryFrom<&Config> for SharedState {
         Ok(SharedState {
             client: Client::new(),
             url: config.endpoint.clone(),
-            metrics: Arc::new(RunMetrics::default()),
+            metrics: Arc::new(RunMetrics {
+                test_duration: config.duration,
+                ..Default::default()
+            }),
         })
     }
 }
