@@ -5,8 +5,8 @@ use std::{
     },
     time::Duration,
 };
-
-#[derive(Default)]
+#[allow(dead_code)]
+#[derive(Default, Debug)]
 pub struct RunMetrics {
     pub test_duration: Duration,
     pub success_count: AtomicU64,
@@ -17,6 +17,23 @@ pub struct RunMetrics {
     pub latencies: Mutex<Vec<Duration>>,
 }
 
+impl RunMetrics {
+    fn new(
+        test_duration_s: f64,
+        success_count: u64,
+        error_count: u64,
+        latencies: Vec<Duration>,
+    ) -> Result<RunMetrics, Self> {
+        Ok(RunMetrics {
+            test_duration: Duration::from_secs_f64(test_duration_s),
+            success_count: AtomicU64::from(success_count),
+            error_count: AtomicU64::from(error_count),
+            latencies: Mutex::from(latencies),
+        })
+    }
+}
+
+#[derive(PartialEq, Debug)]
 pub struct SummaryStatistics {
     pub test_duration: f64,
     pub total_requests: u64,
@@ -74,7 +91,7 @@ pub fn get_percentile(sorted: &[Duration], percentile: f32) -> Duration {
 }
 
 // TODO: This could be an impl of SummaryStatistics
-pub fn get_summary(metrics: &RunMetrics, test_duration: Duration) -> SummaryStatistics {
+pub fn get_summary(metrics: &RunMetrics) -> SummaryStatistics {
     let success = metrics.success_count.load(Ordering::Relaxed);
     let errors = metrics.error_count.load(Ordering::Relaxed);
     let total_requests = success + errors;
@@ -82,7 +99,7 @@ pub fn get_summary(metrics: &RunMetrics, test_duration: Duration) -> SummaryStat
         0 => 0.0,
         _ => (success / total_requests) as f64 * 100.0,
     };
-    let avg_rps = total_requests as f64 / test_duration.as_secs_f64();
+    let avg_rps = total_requests as f64 / metrics.test_duration.as_secs_f64();
 
     let mut latencies = metrics.latencies.lock().unwrap().clone();
     latencies.sort_unstable();
@@ -98,7 +115,7 @@ pub fn get_summary(metrics: &RunMetrics, test_duration: Duration) -> SummaryStat
     let p99 = get_percentile(&latencies, 99.0);
 
     SummaryStatistics {
-        test_duration: test_duration.as_secs_f64(),
+        test_duration: metrics.test_duration.as_secs_f64(),
         total_requests,
         success,
         errors,

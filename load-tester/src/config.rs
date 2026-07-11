@@ -15,8 +15,8 @@ pub struct Args {
     pub virtual_users: u32,
 
     /// Duration of test
-    #[arg(short, long, default_value_t = 5)]
-    pub duration_s: u64,
+    #[arg(short, long, default_value_t = 5.0)]
+    pub duration_s: f64,
 
     /// HTTP method
     #[arg(short, long, default_value = "GET")]
@@ -37,7 +37,7 @@ impl TryFrom<Args> for Config {
         Ok(Config {
             endpoint: Url::parse(&args.endpoint)?,
             virtual_users: args.virtual_users,
-            duration: Duration::from_secs(args.duration_s),
+            duration: Duration::from_secs_f64(args.duration_s),
             method: args.method.parse()?, // type inference
         })
     }
