@@ -26,20 +26,26 @@ pub async fn worker_loop(
     config: &Config,
     shared: SharedState,
 ) -> anyhow::Result<RunMetrics, anyhow::Error> {
+    let run_start = Instant::now();
     let mut tasks = Vec::new();
     let request_timeout = config.timeout;
+    let deadline = Instant::now() + config.duration;
 
     for _ in 0..config.virtual_users {
         let shared = shared.clone();
 
-        // tokio spawn does not block outer loop
         tasks.push(tokio::spawn(async move {
-            let start = Instant::now();
-            let result = timeout(request_timeout, get_request(&shared.client, &shared.url)).await;
-            let elapsed = start.elapsed();
+            let mut results = Vec::new();
 
-            // Task reports its own status
-            (result.is_ok(), elapsed)
+            while Instant::now() < deadline {
+                let start = Instant::now();
+                let result =
+                    timeout(request_timeout, get_request(&shared.client, &shared.url)).await;
+                let elapsed = start.elapsed();
+                results.push((result.is_ok(), elapsed));
+            }
+
+            results
         }));
     }
 
@@ -49,15 +55,17 @@ pub async fn worker_loop(
 
     for task in tasks {
         match task.await {
-            Ok((ok, elapsed)) => {
-                // Populate stats
-                if ok {
-                    success_count += 1
-                } else {
-                    error_count += 1
-                };
+            Ok(results) => {
+                for (ok, elapsed) in results {
+                    // Populate stats
+                    if ok {
+                        success_count += 1
+                    } else {
+                        error_count += 1
+                    };
 
-                latencies.push(elapsed);
+                    latencies.push(elapsed);
+                }
             }
             Err(join_error) => {
                 error_count += 1;
@@ -67,7 +75,7 @@ pub async fn worker_loop(
     }
 
     Ok(RunMetrics {
-        test_duration: config.duration,
+        test_duration: run_start.elapsed(),
         success_count,
         error_count,
         latencies,
