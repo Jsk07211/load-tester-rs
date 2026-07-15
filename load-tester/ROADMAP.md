@@ -21,7 +21,7 @@ Items listed according to planned implementation schedule.
 
 ## HTTP Methods Support
 - [x] Create POST endpoint to test
-- [ ] Test POST endpoint
+- [x] Test POST endpoint
 - [ ] Accept custom payloads
 - [ ] Generate dummy payloads according to custom shape
 - [ ] Accept custom headers

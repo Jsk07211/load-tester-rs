@@ -8,7 +8,7 @@ use std::{fs, time::Duration};
 #[command(version, about, long_about = None)]
 pub struct Args {
     /// Target URL to load test
-    #[arg(short, long, default_value = "http://localhost:8080/add2")]
+    #[arg(short, long, default_value = "http://localhost:8080/person")]
     pub endpoint: String,
 
     /// Number of virtual users (concurrent in-flight requests, sustained for the full test duration)
