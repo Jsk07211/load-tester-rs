@@ -4,6 +4,7 @@ use axum::{
 };
 
 async fn add2(Json(body): Json<u32>) -> Json<u32> {
+    println!("{}", body + 2);
     Json(body + 2)
 }
 

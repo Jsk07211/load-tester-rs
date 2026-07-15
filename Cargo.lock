@@ -772,6 +772,7 @@ dependencies = [
  "clap_builder",
  "http",
  "reqwest",
+ "serde_json",
  "tokio",
 ]
 
@@ -1040,6 +1041,8 @@ dependencies = [
  "rustls",
  "rustls-pki-types",
  "rustls-platform-verifier",
+ "serde",
+ "serde_json",
  "sync_wrapper",
  "tokio",
  "tokio-rustls",
