@@ -1,4 +1,4 @@
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum PayloadSpec {
     // Bytes(Vec<u8>),
     Json(serde_json::Value),

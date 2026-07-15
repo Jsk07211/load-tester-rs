@@ -51,8 +51,11 @@ pub async fn worker_loop(
 
                 let success = match &result {
                     Ok(Ok((status, _text))) => status.is_success(),
-                    Ok(Err(_)) => false, // request-level error (connection refused, etc.)
-                    Err(_) => false,     // timed out
+                    Ok(Err(e)) => {
+                        // println!("{:?}", e);
+                        false
+                    } // request-level error (connection refused, etc.)
+                    Err(_) => false, // timed out
                 };
                 let elapsed = start.elapsed();
                 results.push((success, elapsed));
