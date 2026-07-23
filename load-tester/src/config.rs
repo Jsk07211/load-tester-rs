@@ -2,7 +2,7 @@ use crate::payload::PayloadSpec;
 use clap::Parser;
 /// Validates input
 use reqwest::Url;
-use std::{fs, time::Duration};
+use std::{env::current_dir, fs, time::Duration};
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -29,7 +29,7 @@ pub struct Args {
 
     /// Filepath to payload content
     #[arg(short, long, default_value = None)]
-    pub filepath: Option<String>,
+    pub file_path: Option<String>,
 }
 
 pub struct Config {
@@ -54,9 +54,11 @@ impl TryFrom<Args> for Config {
             payload: None,
         };
 
-        if let Some(file_path) = args.filepath {
-            let payload =
-                fs::read_to_string(file_path).expect("Should have been able to read the file");
+        if let Some(file_path) = args.file_path {
+            let mut path = current_dir()?;
+            path.push(file_path);
+            let payload = fs::read_to_string(&path)
+                .unwrap_or_else(|_| panic!("Should have been able to read the file at {:?}", path));
 
             config.payload = Some(PayloadSpec::Json(serde_json::from_str(&payload)?));
         }
