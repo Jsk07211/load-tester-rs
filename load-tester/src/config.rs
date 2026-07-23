@@ -16,11 +16,11 @@ pub struct Args {
     pub virtual_users: u32,
 
     /// Duration of test
-    #[arg(short, long, default_value_t = 1.0)]
+    #[arg(short, long, default_value_t = 3.0)]
     pub duration_s: f64,
 
     /// Per-task timeout duration
-    #[arg(short, long, default_value_t = 0.5)]
+    #[arg(short, long, default_value_t = 3.0)]
     pub timeout_s: f64,
 
     /// HTTP method
@@ -29,7 +29,7 @@ pub struct Args {
 
     /// Filepath to payload content
     #[arg(short, long, default_value = None)]
-    pub payload_path: Option<String>,
+    pub filepath: Option<String>,
 }
 
 pub struct Config {
@@ -54,7 +54,7 @@ impl TryFrom<Args> for Config {
             payload: None,
         };
 
-        if let Some(file_path) = args.payload_path {
+        if let Some(file_path) = args.filepath {
             let payload =
                 fs::read_to_string(file_path).expect("Should have been able to read the file");
 

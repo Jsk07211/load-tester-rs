@@ -26,6 +26,7 @@ pub async fn request(
 
     let status = response.status();
     let text = response.text().await?;
+    println!("{}", text);
 
     Ok((status, text))
 }
